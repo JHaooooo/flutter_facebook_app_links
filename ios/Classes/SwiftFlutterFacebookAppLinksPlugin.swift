@@ -15,9 +15,10 @@ public class SwiftFlutterFacebookAppLinksPlugin: NSObject, FlutterPlugin {
     // Get user consent
     print("FB APP LINK registering plugin")
     
-    instance.initializeSDK()
+    // instance.initializeSDK()
     
     registrar.addMethodCallDelegate(instance, channel: channel)
+    // registrar.addApplicationDelegate(instance)
   }
 
   public func detachFromEngine(for registrar: FlutterPluginRegistrar) {
@@ -53,9 +54,18 @@ public class SwiftFlutterFacebookAppLinksPlugin: NSObject, FlutterPlugin {
             break
         case "initFBLinks":
             ApplicationDelegate.shared.initializeSDK()
-            result(nil)
-            return
-        case "getDeepLinkUrl":    
+            Settings.shared.isAdvertiserTrackingEnabled = true
+            AppLinkUtility.fetchDeferredAppLink{ (url, error) in
+                if let error = error{
+                    print("Error %a", error)
+                }
+                if let url = url {
+                    self.deepLinkUrl = url.absoluteString
+                    result(self.deepLinkUrl)
+                    // self.sendMessageToStream(link: self.deepLinkUrl)
+                }
+            }
+        case "getDeepLinkUrl":
             result(deepLinkUrl)
         case "activateApp":
             AppEvents.shared.activateApp()
@@ -63,7 +73,6 @@ public class SwiftFlutterFacebookAppLinksPlugin: NSObject, FlutterPlugin {
         default:
             result(FlutterMethodNotImplemented)
         }
-    
   }
 
   private func handleGetPlatformVersion(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
